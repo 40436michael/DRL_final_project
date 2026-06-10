@@ -117,8 +117,9 @@ $$
 R_t =
 -\left(
 WaitingTime_t
+$$
 -------------
-
+$$
 WaitingTime_{t-1}
 \right)
 $$
