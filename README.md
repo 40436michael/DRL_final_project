@@ -25,7 +25,9 @@
 
 https://github.com/user-attachments/assets/c037321b-4dac-49ee-b092-973f6f45e996
 
+## chat log with AI 
 
+放在 chat_log.md
 ---
 
 ## Research Goal
@@ -103,7 +105,8 @@ episodes = 4
 │   ├── total_waiting_time.pdf
 │   └── total_stopped.pdf
 │
-└── README.md
+├── README.md
+└── chat_log.md
 ```
 
 ---
