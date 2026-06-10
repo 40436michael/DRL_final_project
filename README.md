@@ -113,7 +113,7 @@ original_ql_2x2grid.py
 
 此方法採用 SUMO-RL 預設 Reward Function：
 
-[
+$$
 R_t =
 -\left(
 WaitingTime_t
@@ -121,7 +121,7 @@ WaitingTime_t
 
 WaitingTime_{t-1}
 \right)
-]
+$$
 
 核心思想：
 
