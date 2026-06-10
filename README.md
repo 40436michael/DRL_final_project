@@ -26,8 +26,8 @@
 https://github.com/user-attachments/assets/c037321b-4dac-49ee-b092-973f6f45e996
 
 ## chat log with AI 
-
 放在 chat_log.md
+
 ---
 
 ## Research Goal
