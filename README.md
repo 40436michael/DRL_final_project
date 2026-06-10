@@ -117,9 +117,7 @@ $$
 R_t =
 -\left(
 WaitingTime_t
-$$
 -------------
-$$
 WaitingTime_{t-1}
 \right)
 $$
@@ -145,20 +143,20 @@ ours_ql_2x2grid_method.py
 
 依據研究計畫書提出的多目標獎勵函數：
 
-[
+$$
 R_t
 ===
 
 -(w_qQ+w_fF+w_sS+w_cC)
-]
+$$
 
 其中：
 
 ### Queue Term
 
-[
+$$
 Q=\sum queue_i
-]
+$$
 
 代表總排隊車數。
 
