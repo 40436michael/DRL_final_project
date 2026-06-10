@@ -20,6 +20,11 @@
 * Switching Cost（切換成本）
 
 之間的多目標權衡（Multi-objective Trade-off）。
+## demo 影片
+可看影片區
+
+https://github.com/user-attachments/assets/c037321b-4dac-49ee-b092-973f6f45e996
+
 
 ---
 
