@@ -117,7 +117,6 @@ $$
 R_t =
 -\left(
 WaitingTime_t
--------------
 WaitingTime_{t-1}
 \right)
 $$
@@ -145,8 +144,6 @@ ours_ql_2x2grid_method.py
 
 $$
 R_t
-===
-
 -(w_qQ+w_fF+w_sS+w_cC)
 $$
 
@@ -164,9 +161,9 @@ $$
 
 ### Fairness Term
 
-[
+$$
 F=\sigma(queue)
-]
+$$
 
 代表各車道排隊長度標準差。
 
@@ -176,13 +173,13 @@ F=\sigma(queue)
 
 ### Stability Term
 
-[
+$$
 S=
 \begin{cases}
 1,& phase\ changed\
 0,& otherwise
 \end{cases}
-]
+$$
 
 避免頻繁切換號誌。
 
@@ -190,10 +187,10 @@ S=
 
 ### Switching Cost
 
-[
+$$
 C=
 yellow_time
-]
+$$
 
 考慮黃燈時間損失。
 
@@ -260,15 +257,15 @@ ours_ql_2x2grid_advantage.py
 
 原始方法：
 
-[
+$$
 -Q
-]
+$$
 
 改為：
 
-[
+$$
 Q_{t-1}-Q_t
-]
+$$
 
 若排隊數下降：
 
@@ -286,9 +283,9 @@ Agent 可直接知道：
 
 ## Fairness
 
-[
+$$
 F=\sigma(queue)
-]
+$$
 
 保留公平性約束。
 
@@ -296,13 +293,13 @@ F=\sigma(queue)
 
 ## Switching Penalty
 
-[
+$$
 S=
 \begin{cases}
 1,& switched\
 0,& otherwise
 \end{cases}
-]
+$$
 
 僅保留輕量化懲罰。
 
@@ -386,12 +383,10 @@ Switching Cost
 
 利用：
 
-[
+$$
 \Delta Queue
-============
-
 Q_{t-1}-Q_t
-]
+$$
 
 能提供更有效的學習訊號。
 
