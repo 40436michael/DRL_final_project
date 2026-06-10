@@ -1,36 +1,44 @@
-# deep reinforcement learning 期末報告
 # Multi-Objective Traffic Signal Control using Q-Learning and SUMO-RL
 
 基於深度強化學習之多目標智慧交通號誌控制研究
 
-## Overview
-
-本專案為深度強化學習（Deep Reinforcement Learning）課程期末專題，使用 SUMO 與 SUMO-RL 模擬智慧交通號誌控制問題，並探討多目標獎勵函數（Multi-objective Reward Function）對交通效率、公平性與控制穩定性的影響。
-
-研究中建立 2×2 Grid Network 交通環境，並以 Q-Learning 作為控制代理（Agent），比較以下三種交通號誌控制策略：
-
-1. Original Baseline（SUMO-RL 預設方法）
-2. Multi-objective Absolute Penalty（初始提出方法）
-3. Advantage-based Multi-objective Method（改良後方法）
+> Deep Reinforcement Learning Final Project
 
 ---
 
-## Research Motivation
+## Introduction
 
-現有交通號誌控制研究多以降低等待時間或排隊長度為主要目標，但真實交通環境中仍需考慮：
+交通號誌控制（Traffic Signal Control）是智慧交通系統（ITS）中的重要研究議題。
+
+傳統固定時制（Fixed-Time Control）無法即時因應動態車流變化，而近年深度強化學習（Deep Reinforcement Learning, DRL）與強化學習（Reinforcement Learning, RL）逐漸被應用於智慧交通控制領域。
+
+本專案使用 SUMO 與 SUMO-RL 建立 2×2 Grid Traffic Network，並利用 Q-Learning 訓練交通號誌控制代理（Agent），探討：
 
 * Traffic Efficiency（交通效率）
 * Fairness（公平性）
 * Stability（穩定性）
 * Switching Cost（切換成本）
 
-若僅追求吞吐量最佳化，容易產生：
+之間的多目標權衡（Multi-objective Trade-off）。
 
-* 特定方向長時間紅燈（Starvation）
-* 過度頻繁切換號誌
-* 實際部署困難
+---
 
-因此本研究嘗試設計多目標獎勵函數，使 Agent 能在多種交通指標間取得平衡。
+## Research Goal
+
+本研究主要比較三種不同的獎勵函數設計：
+
+| Method         | Description            |
+| -------------- | ---------------------- |
+| Original       | SUMO-RL 原始方法           |
+| Ours Method    | 計畫書提出之多目標懲罰方法          |
+| Ours Advantage | 改良後 Advantage-Based 方法 |
+
+研究目標：
+
+1. 驗證多目標獎勵函數是否可提升交通控制品質
+2. 分析絕對值懲罰設計的問題
+3. 探討 Delta-based Reward 的改善效果
+4. 比較不同 Reward Design 對學習結果的影響
 
 ---
 
@@ -38,21 +46,17 @@
 
 ### Simulation Platform
 
-* SUMO (Simulation of Urban Mobility)
+* SUMO
 * SUMO-RL
-* Python 3.10+
+* Python 3.x
 
-### Road Network
+### Traffic Network
 
 * 2×2 Grid Network
 * Multiple Intersections
 * Dynamic Traffic Flow
 
----
-
-## Reinforcement Learning Setup
-
-### Algorithm
+### RL Algorithm
 
 Q-Learning
 
@@ -65,45 +69,138 @@ gamma = 0.99
 epsilon_start = 0.05
 epsilon_min = 0.005
 
-delta_time = 5
 min_green = 5
+delta_time = 5
 
 num_seconds = 80000
+runs = 30
+episodes = 4
 ```
 
 ---
 
-## Methods
+## Project Structure
 
-### 1. Original Method (Baseline)
-
-SUMO-RL 預設獎勵函數：
-
-[
-R_t = -(\sum WaitingTime_t - \sum WaitingTime_{t-1})
-]
-
-利用等待時間變化量作為回饋訊號。
+```text
+.
+├── original_ql_2x2grid.py
+├── ours_ql_2x2grid_method.py
+├── ours_ql_2x2grid_advantage.py
+│
+├── outputs/
+│   ├── 2x2_our_full/
+│   ├── 2x2_our_methods/
+│   └── 2x2_our_advantage/
+│
+├── figures/
+│   ├── mean_speed.pdf
+│   ├── mean_waiting_time.pdf
+│   ├── total_waiting_time.pdf
+│   └── total_stopped.pdf
+│
+└── README.md
+```
 
 ---
 
-### 2. Multi-objective Absolute Penalty
+# Method 1: Original Q-Learning
 
-本研究初始提出方法：
+File:
+
+```bash
+original_ql_2x2grid.py
+```
+
+此方法採用 SUMO-RL 預設 Reward Function：
 
 [
 R_t =
--(w_qQ_t+w_fF_t+w_sS_t+w_cC_t)
+-\left(
+WaitingTime_t
+-------------
+
+WaitingTime_{t-1}
+\right)
+]
+
+核心思想：
+
+* 降低等待時間
+* 提升交通效率
+* 不考慮公平性
+* 不考慮切換成本
+
+作為本研究的 Baseline。
+
+---
+
+# Method 2: Multi-objective Reward
+
+File:
+
+```bash
+ours_ql_2x2grid_method.py
+```
+
+依據研究計畫書提出的多目標獎勵函數：
+
+[
+R_t
+===
+
+-(w_qQ+w_fF+w_sS+w_cC)
 ]
 
 其中：
 
-* Q：總排隊車數
-* F：公平性（Queue Std）
-* S：是否切換相位
-* C：切換成本（Yellow Time）
+### Queue Term
 
-權重設定：
+[
+Q=\sum queue_i
+]
+
+代表總排隊車數。
+
+---
+
+### Fairness Term
+
+[
+F=\sigma(queue)
+]
+
+代表各車道排隊長度標準差。
+
+用於避免特定方向長期等待。
+
+---
+
+### Stability Term
+
+[
+S=
+\begin{cases}
+1,& phase\ changed\
+0,& otherwise
+\end{cases}
+]
+
+避免頻繁切換號誌。
+
+---
+
+### Switching Cost
+
+[
+C=
+yellow_time
+]
+
+考慮黃燈時間損失。
+
+---
+
+### Weights
 
 ```python
 w_queue = 1.0
@@ -114,25 +211,105 @@ w_switch = 0.1
 
 ---
 
-### 3. Advantage-based Method
+## Problem of Method 2
 
-改良後方法：
+實驗結果顯示：
+
+* Vehicle Queue 快速累積
+* Mean Speed 持續下降
+* Waiting Time 急遽上升
+
+最終產生：
+
+> Gridlock（路口鎖死）
+
+主要原因：
+
+Agent 發現：
+
+切換燈號
+
+↓
+
+立即受到懲罰
+
+↓
+
+選擇永遠不切換
+
+↓
+
+交通癱瘓
+
+此現象屬於 Reward Design 的 Credit Assignment Problem。
+
+---
+
+# Method 3: Advantage-Based Reward
+
+File:
+
+```bash
+ours_ql_2x2grid_advantage.py
+```
+
+為了解決 Method 2 的問題，本研究提出改良版 Reward。
+
+---
+
+## Queue Improvement
+
+原始方法：
 
 [
-R_t =
-w_q(Q_{t-1}-Q_t)
--w_fF_t
--w_sS_t
+-Q
 ]
 
-改進重點：
+改為：
 
-* 使用 Queue Improvement 取代 Absolute Queue
-* 降低 Fairness Penalty
-* 降低 Phase Switching Penalty
-* 移除 Yellow Time Cost
+[
+Q_{t-1}-Q_t
+]
 
-權重設定：
+若排隊數下降：
+
+Reward > 0
+
+若排隊數增加：
+
+Reward < 0
+
+Agent 可直接知道：
+
+> 這次動作是否改善交通狀況
+
+---
+
+## Fairness
+
+[
+F=\sigma(queue)
+]
+
+保留公平性約束。
+
+---
+
+## Switching Penalty
+
+[
+S=
+\begin{cases}
+1,& switched\
+0,& otherwise
+\end{cases}
+]
+
+僅保留輕量化懲罰。
+
+---
+
+## New Weights
 
 ```python
 w_queue = 1.0
@@ -140,145 +317,131 @@ w_fairness = 0.05
 w_switch = 0.02
 ```
 
+並移除：
+
+```python
+Switching Cost
+```
+
+避免 Agent 因過度懲罰而失去探索能力。
+
 ---
 
-## Experimental Results
+# Experimental Results
 
-### Absolute Penalty Method
+## Original Method
 
-觀察結果：
+特性：
 
+* 最穩定
+* Waiting Time 最低
+* 收斂效果最佳
+
+作為 Benchmark。
+
+---
+
+## Multi-objective Method
+
+特性：
+
+* 學習失敗
 * Gridlock 發生
-* 平均速度下降至 2 m/s 以下
-* 停等車輛數接近飽和
+* 車流無法疏導
 
 原因：
 
-高額切換懲罰導致 Agent 學習出：
-
-> 永遠不切換燈號
-
-進而造成整個路網阻塞。
+過高的切換懲罰與絕對值獎勵設計。
 
 ---
 
-### Advantage Method
+## Advantage Method
 
-改善結果：
+特性：
 
-* Mean Speed 提升至 5~7.5 m/s
-* Waiting Time 顯著下降
-* Queue Length 明顯改善
-* Fairness 與 Stability 兼顧
+* 成功收斂
+* Gridlock 消失
+* Mean Speed 顯著提升
+* Waiting Time 明顯下降
+* 保留部分公平性控制能力
+
+結果優於 Method 2。
 
 ---
 
-## Key Findings
+# Key Findings
 
 本研究發現：
 
-### Absolute Reward
+## Absolute Reward Design
 
-存在 Credit Assignment Problem
+容易產生：
 
-Agent 無法判斷：
-
-* 哪個動作真正改善交通
-* 哪個動作導致惡化
+* Credit Assignment Problem
+* Reward Scale Imbalance
+* Gridlock
 
 ---
 
-### Delta-based Reward
+## Delta-Based Reward Design
 
-使用：
+利用：
 
 [
+\Delta Queue
+============
+
 Q_{t-1}-Q_t
 ]
 
-作為改善訊號後：
+能提供更有效的學習訊號。
 
-* 收斂速度提升
-* Gridlock 消失
-* 控制效果大幅改善
+優點：
 
----
-
-## Project Structure
-
-```text
-├── experiment/
-│   ├── ours_ql_2x2grid_method.py
-│   ├── ours_ql_2x2grid_advantage.py
-├── outputs/
-│   ├── 2x2_our_methods/
-│   └── 2x2_our_advantage/
-├── figures/
-│   ├── mean_speed.pdf
-│   ├── total_waiting_time.pdf
-│   ├── mean_waiting_time.pdf
-│   └── total_stopped.pdf
-└── README.md
-```
+* Faster Convergence
+* Better Traffic Flow
+* Reduced Waiting Time
+* Improved Stability
 
 ---
 
-## Run
+# Future Work
 
-### Original Multi-objective Method
+未來可朝以下方向發展：
 
-```bash
-python ours_ql_2x2grid_method.py
-```
+## Multi-Agent Reinforcement Learning
 
-### Advantage Method
+(MARL)
 
-```bash
-python ours_ql_2x2grid_advantage.py
-```
+讓路口間共享資訊進行協同控制。
 
 ---
 
-## Future Work
+## PPO / DQN / A2C
 
-未來可朝以下方向進行研究：
+測試更先進的強化學習演算法：
 
-### Multi-Agent Reinforcement Learning
-
-* MARL
-* CTDE Framework
-* Neighbor Communication
-
-### Better Reward Design
-
-融合：
-
-* Queue Length
-* Waiting Time
-* Throughput
-* CO₂ Emission
-
-### Large-scale Network
-
-* 4×4 Grid
-* 6×6 Grid
-* Real-world Traffic Dataset
+* DQN
+* PPO
+* A2C
+* SAC
 
 ---
 
-## References
+## Real-world Traffic Data
+
+導入真實交通流量資料：
+
+* Taiwan Traffic Dataset
+* Open ITS Dataset
+
+提升模型實務價值。
+
+---
+
+# References
 
 1. Varaiya, P. (2013). Max Pressure Control of a Network of Signalized Intersections.
-2. Wei, H. et al. (2018). IntelliLight: A Reinforcement Learning Approach for Intelligent Traffic Light Control.
-3. Sun, Q. W. et al. (2022). Deep Reinforcement-Learning-Based Adaptive Traffic Signal Control with Real-Time Queue Lengths.
-4. Janota, A. et al. (2024). Reinforcement Learning Approach to Adaptive Traffic Signal Control using SUMO-RL.
-
----
-
-## Author
-
-National Chin-Yi University of Technology
-
-Deep Reinforcement Learning Final Project
-
-Multi-Objective Traffic Signal Control using Q-Learning and SUMO-RL
+2. Wei, H., Zheng, G., Yao, H., & Li, Z. (2018). IntelliLight: A Reinforcement Learning Approach for Intelligent Traffic Light Control.
+3. Sun, Q. W., Han, S. Y., Zhou, J., Chen, Y. H., & Yao, K. (2022). Deep Reinforcement-Learning-Based Adaptive Traffic Signal Control with Real-Time Queue Lengths.
+4. Janota, A. et al. (2024). Evaluation of Adaptive Traffic Light Control on SUMO Platform Using Reinforcement Learning.
